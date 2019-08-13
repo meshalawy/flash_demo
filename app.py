@@ -16,6 +16,7 @@ import base64
 import io
 import time
 import os
+import json
 
 app = dash.Dash(
     __name__,
@@ -35,15 +36,16 @@ DATA_PATH = BASE_PATH.joinpath("data").resolve()
 # Read data
 # df = pd.read_csv(DATA_PATH.joinpath("clinical_analytics.csv"))
 
+# Data that holds the selected scenario information
+scenario_name = "default"
+scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
 
 def get_visualization():
-    carshare = px.data.carshare()
-
     fig = {
         "data": [{
                 "type": "scattermapbox",
-                "lat": list(carshare.centroid_lat),
-                "lon": list(carshare.centroid_lon),
+                "lat": [item['lat'] for item in scenario_data['items']],
+                "lon": [item['long'] for item in scenario_data['items']],
                 "hoverinfo": "text",
                 # "hovertext": [["Name: {} <br>Type: {} <br>Provider: {}".format(i,j,k)]
                                 # for i,j,k in zip(map_data['Name'], map_data['Type'],map_data['Provider'])],
@@ -66,11 +68,8 @@ def get_visualization():
                 mapbox=dict(
                     accesstoken=os.environ.get("mapbox_accesstoken"),
                     style="light",
-                    center=dict(
-                        lon=-73.567,
-                        lat=45.5017
-                    ),
-                    zoom=10,
+                    center=scenario_data['center'],
+                    zoom=scenario_data['zoom'],
                 )
             )
     }
@@ -258,31 +257,30 @@ def show_file_preview(contents):
         return [html.P("Select a file to preview")]
 
 
-# @app.callback(
-#     [
-#         Output('suggested_tags', 'children'),
-#         Output('keywords', 'children'),
-#         Output('word_cloud', 'children')
-#     ],[
-#         Input('analyze-btn', 'n_clicks')
-#     ],[
-#         State('upload', 'contents'),
-#         State('dataset-title', 'value'),
-#         State('dataset-source', 'value'),
-#         State('dataset-info', 'value')
-#     ]
-# )
-def on_click(n_clicks, contents, title, source, info):
+@app.callback(
+    [
+        Output('visualization', 'children'),
+    ],[
+        Input('learn-btn', 'n_clicks')
+    ],[
+        State('training_data_upload', 'filename'),
+    ]
+)
+def on_click(n_clicks, filename):
+    global scenario_name, scenario_data
+    
+
     if n_clicks is None:
         raise PreventUpdate
-    
-    df = read_contents_csv_to_df(contents)
 
-    if df is not None:
-        time.sleep(1)
-        return ("","","")
-    else:
-        return ("","","")
+    scenario_name = "default"
+    if filename:
+        scenario_name = filename.split('.')[0]
+        
+    scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
+    return ([get_visualization()])
+
+        
 
 
 # Run the server
