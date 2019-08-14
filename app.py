@@ -65,6 +65,7 @@ def get_visualization():
                     t=0
                 ),
                 hovermode="closest",
+                clickmode='event+select',
                 mapbox=dict(
                     accesstoken=os.environ.get("mapbox_accesstoken"),
                     style="light",
@@ -82,7 +83,7 @@ def get_visualization():
 
 
 def get_flash_results():
-    df = pd.read_csv(DATA_PATH.joinpath("clinical_analytics.csv"))
+    df = pd.DataFrame(scenario_data['flash_learning_results'])
     return [
         html.Div("Flash Learning Results", className="panel_title"),
         dash_table.DataTable(
@@ -96,7 +97,7 @@ def get_flash_results():
 
 
 def get_competitor_results():
-    df = pd.read_csv(DATA_PATH.joinpath("clinical_analytics.csv"))
+    df = pd.DataFrame(scenario_data['competitor_learning_results'])
     return [
         # html.H5("Competitor Learning Results"),
         html.Div("Competitor Learning Results", className="panel_title"),
@@ -109,6 +110,22 @@ def get_competitor_results():
         
     ]
 
+
+def get_statistics():
+    df = pd.DataFrame(scenario_data['statistics'])
+    df = df[["criteria","flash","competitor"]]
+    return [
+        # html.H5("Competitor Learning Results"),
+        html.Div("Statistics", className="panel_title"),
+        dash_table.DataTable(
+                data=df.to_dict('records'),
+                columns=[{'name': i, 'id': i} for i in df.columns],
+                fixed_rows={ 'headers': True, 'data': 0 },
+                style_cell={'width': '150px'}
+            ), 
+        html.Div(id="selected_data"),
+        
+    ]
 
 def generate_control_card():
     """
@@ -210,7 +227,8 @@ app.layout = html.Div(
                         label='Basic Operation', 
                         id='basic-operation',
                         children=[
-                            html.Div(get_visualization(), id="visualization",  className = "twelve columns"),
+                            html.Div(get_visualization(), id="visualization",  className = "nine columns"),
+                            html.Div(get_statistics(), id="statistics",  className = "three columns"),
                             html.Div(get_flash_results(), id="flash_results", className = "six columns"),
                             html.Div(get_competitor_results(), id="competitor_results", className = "six columns"),
                         ]
@@ -260,6 +278,9 @@ def show_file_preview(contents):
 @app.callback(
     [
         Output('visualization', 'children'),
+        Output('flash_results', 'children'),
+        Output('competitor_results', 'children'),
+        Output('statistics', 'children'),
     ],[
         Input('learn-btn', 'n_clicks')
     ],[
@@ -278,9 +299,26 @@ def on_click(n_clicks, filename):
         scenario_name = filename.split('.')[0]
         
     scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
-    return ([get_visualization()])
+    return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
 
         
+@app.callback(
+    [
+        Output('selected_data', 'children'),
+    ],[
+        Input('graph', 'clickData'), 
+        Input('graph', 'selectedData')
+    ]
+)
+def graph_on_click(click_data, selected_data):
+    return [f"""
+
+clicked data: {str(click_data)}
+<br>
+selected data: {str(selected_data)}
+
+            """]
+
 
 
 # Run the server

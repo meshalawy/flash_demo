@@ -266,8 +266,29 @@
         {"lat":47.0, "long":-68.0, "value":0 },
         {"lat":45.0, "long":-66.0, "value":1 }
     ],
+    "flash_learning_results":[
+        {"Parameter": "Paramaeter 1", "Value": "value 1"},
+        {"Parameter": "Paramaeter 2", "Value": "value 2"},
+        {"Parameter": "Paramaeter 3", "Value": "value 3"},
+        {"Parameter": "Paramaeter 4", "Value": "value 4"},
+        {"Parameter": "Paramaeter 5", "Value": "value 5"},
+        {"Parameter": "Paramaeter 6", "Value": "value 6"},
+        {"Parameter": "Paramaeter 7", "Value": "value 7"},
+        {"Parameter": "Paramaeter 8", "Value": "value 8"}
+    ], 
+    "competitor_learning_results":[
+        {"Parameter": "Paramaeter 1", "Value": "value 1"},
+        {"Parameter": "Paramaeter 2", "Value": "value 2"},
+        {"Parameter": "Paramaeter 3", "Value": "value 3"},
+        {"Parameter": "Paramaeter 4", "Value": "value 4"},
+        {"Parameter": "Paramaeter 5", "Value": "value 5"},
+        {"Parameter": "Paramaeter 6", "Value": "value 6"},
+        {"Parameter": "Paramaeter 7", "Value": "value 7"},
+        {"Parameter": "Paramaeter 8", "Value": "value 8"}
+    ],
     "statistics":[
-        {"criteria":"", "flash":"", "competitor":""}
+        {"criteria":"Running Time", "flash":"1.12 s", "competitor":"65 s"},
+        {"criteria":"Accuracy", "flash":"0.93", "competitor":"0.71"}
     ],
     "center":{
         "lon": -95,

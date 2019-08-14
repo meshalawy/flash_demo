@@ -3,6 +3,12 @@
     "boundig_box": "",
     "items":[
     ],
+    "flash_learning_results":[
+        {"Parameter": "", "Value": ""}
+    ], 
+    "competitor_learning_results":[
+        {"Parameter": "", "Value": ""}
+    ],
     "statistics":[
         {"criteria":"", "flash":"", "competitor":""}
     ],
