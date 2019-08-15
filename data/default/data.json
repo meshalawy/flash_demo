@@ -1,7 +1,8 @@
 {
     "type":"points",
-    "boundig_box": "",
-    "items":[
+    "learning_data":[
+    ],
+    "testing_data":[
     ],
     "flash_learning_results":[
         {"Parameter": "", "Value": ""}
@@ -9,13 +10,18 @@
     "competitor_learning_results":[
         {"Parameter": "", "Value": ""}
     ],
-    "statistics":[
+    "learning_statistics":[
         {"criteria":"", "flash":"", "competitor":""}
     ],
-    "center":{
-        "lon": -95,
-        "lat": 40
-    }, 
-    "zoom":3
+    "predict_all_statistics":[
+        {"criteria":"", "flash":"", "competitor":""}
+    ],
+    "map":{
+        "center":{
+            "lon": -95,
+            "lat": 40
+        }, 
+        "zoom":3
+    }
     
 }

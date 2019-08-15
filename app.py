@@ -40,37 +40,38 @@ DATA_PATH = BASE_PATH.joinpath("data").resolve()
 scenario_name = "default"
 scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
 
-def get_visualization():
+def get_visualization(mode='learn'):
+    if mode=='learn':
+        data = scenario_data['learning_data']
+    else: 
+        data = scenario_data['testing_data']
     fig = {
         "data": [{
                 "type": "scattermapbox",
-                "lat": [item['lat'] for item in scenario_data['items']],
-                "lon": [item['long'] for item in scenario_data['items']],
+                "lat": [item['lat'] for item in data],
+                "lon": [item['long'] for item in data],
                 "hoverinfo": "text",
                 # "hovertext": [["Name: {} <br>Type: {} <br>Provider: {}".format(i,j,k)]
                                 # for i,j,k in zip(map_data['Name'], map_data['Type'],map_data['Provider'])],
                 "mode": "markers",
                 # "name": list(map_data['Name']),
+                # "color":"red",
                 "marker": {
                     "size": 6,
-                    "opacity": 0.7
+                    "opacity": 0.7,
+                    "color": [item['color'] for item in data],
                 }
         }],
         "layout": dict(
                 autosize=True,
-                margin=dict(
-                    l=0,
-                    r=0,
-                    b=0,
-                    t=0
-                ),
+                margin=dict(l=0,r=0,b=0,t=0),
                 hovermode="closest",
                 clickmode='event+select',
                 mapbox=dict(
                     accesstoken=os.environ.get("mapbox_accesstoken"),
                     style="light",
-                    center=scenario_data['center'],
-                    zoom=scenario_data['zoom'],
+                    center=scenario_data['map']['center'],
+                    zoom=scenario_data['map']['zoom'],
                 )
             )
     }
@@ -111,8 +112,12 @@ def get_competitor_results():
     ]
 
 
-def get_statistics():
-    df = pd.DataFrame(scenario_data['statistics'])
+def get_statistics(mode='learn'):
+    if mode=='learn':
+        df = pd.DataFrame(scenario_data['learning_statistics'])
+    else:
+        df = pd.DataFrame(scenario_data['predict_all_statistics'])
+    
     df = df[["criteria","flash","competitor"]]
     return [
         # html.H5("Competitor Learning Results"),
@@ -299,7 +304,7 @@ def on_click(n_clicks, filename):
         scenario_name = filename.split('.')[0]
         
     scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
-    return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
+    return ([get_visualization('learn'), get_flash_results(), get_competitor_results(), get_statistics()])
 
         
 @app.callback(
