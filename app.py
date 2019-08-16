@@ -305,6 +305,7 @@ def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
             scenario_name = filename.split('.')[0]
             
         scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
+        time.sleep(3)
         return ([get_visualization('learn'), get_flash_results('learn'), get_competitor_results('learn'), get_statistics('learn')])
     
     elif triggered_by == 'predict-all-btn.n_clicks':
