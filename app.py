@@ -57,8 +57,8 @@ def get_visualization(mode='learn'):
                 # "name": list(map_data['Name']),
                 # "color":"red",
                 "marker": {
-                    "size": 6,
-                    "opacity": 0.7,
+                    "size": 8,
+                    "opacity": 0.8,
                     "color": [item['color'] for item in data],
                 }
         }],
@@ -75,40 +75,53 @@ def get_visualization(mode='learn'):
                 )
             )
     }
+    config = {
+        'modeBarButtonsToRemove': [] if mode == 'interactive-prediction' else ['select2d', 'lasso2d'],
+        'displayModeBar': True if mode == 'interactive-prediction' else 'hover'
+    }
 
 
     return [
         html.Div("Visualization", className="panel_title"),
-        html.Div([dcc.Graph(id='graph', figure=fig)])
+        html.Div([dcc.Graph(id='graph', figure=fig, config=config)])
     ]
 
 
-def get_flash_results():
-    df = pd.DataFrame(scenario_data['flash_learning_results'])
+def get_flash_results(mode='learn'):
+    if mode=='learn':
+        df = pd.DataFrame(scenario_data['flash_learning_results'])
+        title = 'Flash Learning Results'
+    else:
+        df = pd.DataFrame(scenario_data['flash_testing_results'])[['lat', 'long', 'value', 'confidence']]
+        title = 'Flash Predictiom Results'
+    
     return [
-        html.Div("Flash Learning Results", className="panel_title"),
+        html.Div(title, className="panel_title"),
+        dash_table.DataTable(
+                data=df.to_dict('records'),
+                columns=[{'name': i, 'id': i} for i in df.columns],
+                fixed_rows={ 'headers': True, 'data': 0 },
+                style_cell={'width': '150px'}
+            ) 
+    ]
+
+
+def get_competitor_results(mode='learn'):
+    if mode=='learn':
+        df = pd.DataFrame(scenario_data['competitor_learning_results'])
+        title = 'Competitor Learning Results'
+    else:
+        df = pd.DataFrame(scenario_data['competitor_testing_results'])[['lat', 'long', 'value', 'confidence']]
+        title = 'Competitor Predictiom Results'
+    
+    return [
+        html.Div(title, className="panel_title"),
         dash_table.DataTable(
                 data=df.to_dict('records'),
                 columns=[{'name': i, 'id': i} for i in df.columns],
                 fixed_rows={ 'headers': True, 'data': 0 },
                 style_cell={'width': '150px'}
             )
-        
-    ]
-
-
-def get_competitor_results():
-    df = pd.DataFrame(scenario_data['competitor_learning_results'])
-    return [
-        # html.H5("Competitor Learning Results"),
-        html.Div("Competitor Learning Results", className="panel_title"),
-        dash_table.DataTable(
-                data=df.to_dict('records'),
-                columns=[{'name': i, 'id': i} for i in df.columns],
-                fixed_rows={ 'headers': True, 'data': 0 },
-                style_cell={'width': '150px'}
-            )
-        
     ]
 
 
@@ -261,25 +274,6 @@ def read_contents_csv_to_df(contents):
     return df
 
 
-# @app.callback(
-#     [Output('dataset-preview', 'children')],
-#     [Input('upload', 'contents')],
-# )
-def show_file_preview(contents):
-    df = read_contents_csv_to_df(contents)
-    if df is not None:
-        return [
-            dash_table.DataTable(
-                data=df.to_dict('records'),
-                columns=[{'name': i, 'id': i} for i in df.columns],
-                fixed_rows={ 'headers': True, 'data': 0 },
-                style_cell={'width': '150px'}
-            )
-        ]
-    else:
-        return [html.P("Select a file to preview")]
-
-
 @app.callback(
     [
         Output('visualization', 'children'),
@@ -287,24 +281,39 @@ def show_file_preview(contents):
         Output('competitor_results', 'children'),
         Output('statistics', 'children'),
     ],[
-        Input('learn-btn', 'n_clicks')
+        Input('learn-btn', 'n_clicks'),
+        Input('predict-all-btn', 'n_clicks'),
+        Input('interactive-prediction-btn', 'n_clicks')
     ],[
         State('training_data_upload', 'filename'),
     ]
 )
-def on_click(n_clicks, filename):
+def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
     global scenario_name, scenario_data
-    
+    ctx = dash.callback_context
 
-    if n_clicks is None:
+
+    if (not ctx.triggered) or not ctx.triggered[0]['value']  :
         raise PreventUpdate
+    # if n_clicks1 is None:
+    #     raise PreventUpdate
 
-    scenario_name = "default"
-    if filename:
-        scenario_name = filename.split('.')[0]
-        
-    scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
-    return ([get_visualization('learn'), get_flash_results(), get_competitor_results(), get_statistics()])
+    triggered_by = ctx.triggered[0]['prop_id']
+    if triggered_by == 'learn-btn.n_clicks':
+        scenario_name = "default"
+        if filename:
+            scenario_name = filename.split('.')[0]
+            
+        scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
+        return ([get_visualization('learn'), get_flash_results('learn'), get_competitor_results('learn'), get_statistics('learn')])
+    
+    elif triggered_by == 'predict-all-btn.n_clicks':
+        return ([get_visualization('predict-all'), get_flash_results('predict-all'), get_competitor_results('predict-all'), get_statistics('predict-all')])
+
+    elif triggered_by == 'interactive-prediction-btn.n_clicks':
+        return ([get_visualization('interactive-prediction'), get_flash_results('interactive-prediction'), get_competitor_results('interactive-prediction'), get_statistics('interactive-prediction')])
+
+
 
         
 @app.callback(
