@@ -222,7 +222,7 @@ app.layout = html.Div(
         html.Div(
             id="banner",
             className="banner",
-            children=[html.Img(src=app.get_asset_url("logo.png")), html.H3('FLASH IN ACTION')],
+            children=[html.Img(src=app.get_asset_url("logo.png")), html.H3('FLASH')],
         ),
         # Left column
         html.Div(
