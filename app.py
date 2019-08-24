@@ -302,7 +302,7 @@ def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
     if triggered_by == 'learn-btn.n_clicks':
         scenario_name = "default"
         if filename:
-            scenario_name = filename.split('.')[0]
+            scenario_name = filename.split('-')[0]
             
         scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
         time.sleep(3)
