@@ -92,7 +92,7 @@ def get_flash_results(mode='learn'):
         df = pd.DataFrame(scenario_data['flash_learning_results'])
         title = 'Flash Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['flash_testing_results'])[['lat', 'lon', 'value', 'confidence']]
+        df = pd.DataFrame(scenario_data['flash_testing_results']) #[['lat', 'lon', 'value', 'confidence']]
         title = 'Flash Predictiom Results'
     
     return [
@@ -111,7 +111,7 @@ def get_competitor_results(mode='learn'):
         df = pd.DataFrame(scenario_data['competitor_learning_results'])
         title = 'Competitor Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['competitor_testing_results'])[['lat', 'lon', 'value', 'confidence']]
+        df = pd.DataFrame(scenario_data['competitor_testing_results']) #[['lat', 'lon', 'value', 'confidence']]
         title = 'Competitor Predictiom Results'
     
     return [
