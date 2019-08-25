@@ -49,7 +49,7 @@ def get_visualization(mode='learn'):
         "data": [{
                 "type": "scattermapbox",
                 "lat": [item['lat'] for item in data],
-                "lon": [item['long'] for item in data],
+                "lon": [item['lon'] for item in data],
                 "hoverinfo": "text",
                 # "hovertext": [["Name: {} <br>Type: {} <br>Provider: {}".format(i,j,k)]
                                 # for i,j,k in zip(map_data['Name'], map_data['Type'],map_data['Provider'])],
@@ -92,7 +92,7 @@ def get_flash_results(mode='learn'):
         df = pd.DataFrame(scenario_data['flash_learning_results'])
         title = 'Flash Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['flash_testing_results'])[['lat', 'long', 'value', 'confidence']]
+        df = pd.DataFrame(scenario_data['flash_testing_results'])[['lat', 'lon', 'value', 'confidence']]
         title = 'Flash Predictiom Results'
     
     return [
@@ -111,7 +111,7 @@ def get_competitor_results(mode='learn'):
         df = pd.DataFrame(scenario_data['competitor_learning_results'])
         title = 'Competitor Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['competitor_testing_results'])[['lat', 'long', 'value', 'confidence']]
+        df = pd.DataFrame(scenario_data['competitor_testing_results'])[['lat', 'lon', 'value', 'confidence']]
         title = 'Competitor Predictiom Results'
     
     return [
