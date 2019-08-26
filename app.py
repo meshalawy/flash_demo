@@ -39,8 +39,9 @@ DATA_PATH = BASE_PATH.joinpath("data").resolve()
 # Data that holds the selected scenario information
 scenario_name = "default"
 scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
+mode = 'learn'
 
-def get_visualization(mode='learn'):
+def get_visualization():
     if mode=='learn':
         data = scenario_data['learning_data']
     else: 
@@ -87,12 +88,12 @@ def get_visualization(mode='learn'):
     ]
 
 
-def get_flash_results(mode='learn'):
+def get_flash_results():
     if mode=='learn':
         df = pd.DataFrame(scenario_data['flash_learning_results'])
         title = 'Flash Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['flash_testing_results']) #[['lat', 'lon', 'value', 'confidence']]
+        df = pd.DataFrame(scenario_data['flash_testing_results']).get(['lat', 'lon', 'value', 'confidence'])
         title = 'Flash Predictiom Results'
     
     return [
@@ -106,12 +107,12 @@ def get_flash_results(mode='learn'):
     ]
 
 
-def get_competitor_results(mode='learn'):
+def get_competitor_results():
     if mode=='learn':
         df = pd.DataFrame(scenario_data['competitor_learning_results'])
         title = 'Competitor Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['competitor_testing_results']) #[['lat', 'lon', 'value', 'confidence']]
+        df = pd.DataFrame(scenario_data['competitor_testing_results']).get(['lat', 'lon', 'value', 'confidence'])
         title = 'Competitor Predictiom Results'
     
     return [
@@ -125,7 +126,7 @@ def get_competitor_results(mode='learn'):
     ]
 
 
-def get_statistics(mode='learn'):
+def get_statistics():
     if mode=='learn':
         df = pd.DataFrame(scenario_data['learning_statistics'])
     else:
@@ -289,7 +290,7 @@ def read_contents_csv_to_df(contents):
     ]
 )
 def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
-    global scenario_name, scenario_data
+    global scenario_name, scenario_data, mode
     ctx = dash.callback_context
 
 
@@ -306,34 +307,60 @@ def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
             
         scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
         time.sleep(3)
-        return ([get_visualization('learn'), get_flash_results('learn'), get_competitor_results('learn'), get_statistics('learn')])
+        mode='learn'
+        return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
     
     elif triggered_by == 'predict-all-btn.n_clicks':
-        return ([get_visualization('predict-all'), get_flash_results('predict-all'), get_competitor_results('predict-all'), get_statistics('predict-all')])
+        mode='predict-all'
+        return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
 
     elif triggered_by == 'interactive-prediction-btn.n_clicks':
-        return ([get_visualization('interactive-prediction'), get_flash_results('interactive-prediction'), get_competitor_results('interactive-prediction'), get_statistics('interactive-prediction')])
+        mode='interactive-prediction'
+        return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
 
 
+@app.callback(
+    Output('selected_data', 'children'),
+    [Input('graph', 'clickData')]
+)
+def graph_on_click(click_data):
+    global scenario_data
+    if click_data and (mode=='predict-all' or mode=='interactive-prediction'):
+        index = click_data['points'][0]['pointNumber']
+        item = scenario_data['testing_data'][index]
+        flash = scenario_data['flash_testing_results'][index]
+        competitor = scenario_data['competitor_testing_results'][index]
 
+        return [
+            html.Div("Info", className="panel_title"),
+            dash_table.DataTable(
+                data=[
+                    {'p': 'Ground Truth', 'v': item['value']},
+                    {'p': 'Flash Prediction', 'v': flash.get('value')},
+                    {'p': 'Flash Confidence', 'v': flash.get('confidence')},
+                    {'p': 'Competitor Prediction', 'v': competitor.get('value')},
+                    {'p': 'Competitor Confidence', 'v': competitor.get('confidence')},
+                ],
+                columns=[{'name': 'Property', 'id': 'p'}, {'name': 'Value', 'id': 'v'}],
+                fixed_rows={ 'headers': False, 'data': 0 },
+                style_cell={'width': '150px'}
+            )]
+    else: 
+        return [""]
         
 @app.callback(
     [
-        Output('selected_data', 'children'),
+        Output('internals-monitoring', 'children'),
     ],[
-        Input('graph', 'clickData'), 
         Input('graph', 'selectedData')
     ]
 )
-def graph_on_click(click_data, selected_data):
-    return [f"""
-
-clicked data: {str(click_data)}
-<br>
-selected data: {str(selected_data)}
-
-            """]
-
+def graph_on_selections(selected_data):
+    if selected_data and len(selected_data.keys()) > 1:
+        print('finding the selected querter')
+        return ['']
+    else:
+        return [""]
 
 
 # Run the server
