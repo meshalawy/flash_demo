@@ -42,6 +42,7 @@ scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
 mode = 'learn'
 
 def get_visualization():
+    global mode
     if mode=='learn':
         data = scenario_data['learning_data']
     else: 
@@ -89,11 +90,13 @@ def get_visualization():
 
 
 def get_flash_results():
+    global mode
     if mode=='learn':
         df = pd.DataFrame(scenario_data['flash_learning_results'])
         title = 'Flash Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['flash_testing_results']).get(['lat', 'lon', 'value', 'confidence'])
+        df = pd.DataFrame(scenario_data['flash_testing_results'])
+        df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
         title = 'Flash Predictiom Results'
     
     return [
@@ -108,11 +111,13 @@ def get_flash_results():
 
 
 def get_competitor_results():
+    global mode
     if mode=='learn':
         df = pd.DataFrame(scenario_data['competitor_learning_results'])
         title = 'Competitor Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['competitor_testing_results']).get(['lat', 'lon', 'value', 'confidence'])
+        df = pd.DataFrame(scenario_data['competitor_testing_results'])
+        df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
         title = 'Competitor Predictiom Results'
     
     return [
@@ -127,6 +132,7 @@ def get_competitor_results():
 
 
 def get_statistics():
+    global mode
     if mode=='learn':
         df = pd.DataFrame(scenario_data['learning_statistics'])
     else:
@@ -324,7 +330,7 @@ def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
     [Input('graph', 'clickData')]
 )
 def graph_on_click(click_data):
-    global scenario_data
+    global scenario_data, mode
     if click_data and (mode=='predict-all' or mode=='interactive-prediction'):
         index = click_data['points'][0]['pointNumber']
         item = scenario_data['testing_data'][index]
