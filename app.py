@@ -5,6 +5,7 @@ import dash_table
 from dash.dependencies import Input, Output, State, ClientsideFunction
 from dash.exceptions import PreventUpdate
 import plotly.express as px
+from shapely.geometry import Point, box
 
 
 
@@ -40,9 +41,9 @@ DATA_PATH = BASE_PATH.joinpath("data").resolve()
 scenario_name = "default"
 scenario_data = json.load(open(DATA_PATH.joinpath(scenario_name, 'data.json')))
 mode = 'learn'
-
+selected_q = None
 def get_visualization():
-    global mode
+    global scenario_data, mode, selected_q
     if mode=='learn':
         data = scenario_data['learning_data']
     else: 
@@ -90,14 +91,20 @@ def get_visualization():
 
 
 def get_flash_results():
-    global mode
+    global scenario_data, mode, selected_q
     if mode=='learn':
         df = pd.DataFrame(scenario_data['flash_learning_results'])
         title = 'Flash Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['flash_testing_results'])
-        df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
         title = 'Flash Predictiom Results'
+        if mode=='predict-all':
+            df = pd.DataFrame(scenario_data['flash_testing_results'])
+            df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
+        elif selected_q:
+            df = pd.DataFrame(scenario_data['interactive_prediction'][selected_q]['flash_testing_results'])
+            df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
+        else: 
+            df = pd.DataFrame()
     
     return [
         html.Div(title, className="panel_title"),
@@ -111,14 +118,20 @@ def get_flash_results():
 
 
 def get_competitor_results():
-    global mode
+    global scenario_data, mode, selected_q
     if mode=='learn':
         df = pd.DataFrame(scenario_data['competitor_learning_results'])
         title = 'Competitor Learning Results'
     else:
-        df = pd.DataFrame(scenario_data['competitor_testing_results'])
-        df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
         title = 'Competitor Predictiom Results'
+        if mode=='predict-all':
+            df = pd.DataFrame(scenario_data['competitor_testing_results'])
+            df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
+        elif selected_q:
+            df = pd.DataFrame(scenario_data['interactive_prediction'][selected_q]['competitor_testing_results'])
+            df = df.get([x for x in ['lat', 'lon', 'value', 'confidence'] if x in df.columns])
+        else: 
+            df = pd.DataFrame()
     
     return [
         html.Div(title, className="panel_title"),
@@ -132,7 +145,7 @@ def get_competitor_results():
 
 
 def get_statistics():
-    global mode
+    global scenario_data, mode, selected_q
     if mode=='learn':
         df = pd.DataFrame(scenario_data['learning_statistics'])
     else:
@@ -290,13 +303,15 @@ def read_contents_csv_to_df(contents):
     ],[
         Input('learn-btn', 'n_clicks'),
         Input('predict-all-btn', 'n_clicks'),
-        Input('interactive-prediction-btn', 'n_clicks')
+        Input('interactive-prediction-btn', 'n_clicks'),
+        Input('graph', 'selectedData')
     ],[
         State('training_data_upload', 'filename'),
+        # State('visualization', 'children')
     ]
 )
-def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
-    global scenario_name, scenario_data, mode
+def on_click_learn(n_clicks1, n_clicks2, n_clicks3, selected_data, filename):
+    global scenario_name, scenario_data, mode, selected_q
     ctx = dash.callback_context
 
 
@@ -322,7 +337,22 @@ def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
 
     elif triggered_by == 'interactive-prediction-btn.n_clicks':
         mode='interactive-prediction'
+        selected_q = None
         return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
+    elif mode == 'interactive-prediction' and triggered_by == 'graph.selectedData' and selected_data and len(selected_data.keys()) > 1:
+        mapbox = selected_data['range']['mapbox'] 
+        minx, miny,  maxx, maxy = mapbox[0][0], mapbox[1][1], mapbox[1][0], mapbox[0][1]
+        b = box(minx, miny,  maxx, maxy) 
+        
+        selected_q = None
+        for q, q_data in  scenario_data['interactive_prediction'].items():
+            c = Point(q_data['center']['lon'], q_data['center']['lat'])
+            if b.intersects(c):
+                selected_q = q
+                return ([get_visualization(), get_flash_results(), get_competitor_results(), get_statistics()])
+        raise PreventUpdate        
+    else:
+        raise PreventUpdate
 
 
 @app.callback(
@@ -330,7 +360,7 @@ def on_click_learn(n_clicks1, n_clicks2, n_clicks3, filename):
     [Input('graph', 'clickData')]
 )
 def graph_on_click(click_data):
-    global scenario_data, mode
+    global scenario_data, mode, selected_q
     if click_data and (mode=='predict-all' or mode=='interactive-prediction'):
         index = click_data['points'][0]['pointNumber']
         item = scenario_data['testing_data'][index]
@@ -354,19 +384,19 @@ def graph_on_click(click_data):
     else: 
         return [""]
         
-@app.callback(
-    [
-        Output('internals-monitoring', 'children'),
-    ],[
-        Input('graph', 'selectedData')
-    ]
-)
-def graph_on_selections(selected_data):
-    if selected_data and len(selected_data.keys()) > 1:
-        print('finding the selected querter')
-        return ['']
-    else:
-        return [""]
+# @app.callback(
+#     [
+#         Output('internals-monitoring', 'children'),
+#     ],[
+#         Input('graph', 'selectedData')
+#     ]
+# )
+# def graph_on_selections(selected_data):
+#     if selected_data and len(selected_data.keys()) > 1:
+#         print('finding the selected querter')
+#         return ['']
+#     else:
+#         return [""]
 
 
 # Run the server
