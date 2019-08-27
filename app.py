@@ -148,10 +148,15 @@ def get_statistics():
     global scenario_data, mode, selected_q
     if mode=='learn':
         df = pd.DataFrame(scenario_data['learning_statistics'])
-    else:
+    elif mode=='predict-all':
         df = pd.DataFrame(scenario_data['predict_all_statistics'])
+    elif selected_q:
+        df = pd.DataFrame(scenario_data['interactive_prediction'][selected_q]['predict_all_statistics'])
+    else:
+        df = pd.DataFrame()
     
-    df = df[["criteria","flash","competitor"]]
+    if len(df) > 0 : 
+        df = df[["criteria","flash","competitor"]]
     return [
         # html.H5("Competitor Learning Results"),
         html.Div("Statistics", className="panel_title"),
